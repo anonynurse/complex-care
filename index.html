@@ -57,6 +57,7 @@ header{min-height:36px;padding:4px 8px;gap:8px}.brand{gap:5px}.brand svg{width:2
  .diagram-caption{font-size:9px}.progress-label{font-size:9px}.fact-grid{grid-template-columns:1fr}
 }
 .posterior-leader{stroke-dasharray:5 5}
+.mapping-slots{display:flex;flex-wrap:wrap;gap:4px}.mapping-slot{flex:0 1 130px;max-width:100%}.mapping-slot.filled{flex:0 1 auto}
 </style>
 </head>
 <body>
@@ -131,23 +132,33 @@ const tables=[
  ['Normal Ranges',[['Heart rate','60 - 100'],['PR interval','0.12 - 0.20 s'],['QRS','0.06 - 0.12 s'],['QT interval','< 0.40']]]
 ];
 tables.forEach(([name,rows],g)=>rows.forEach(([heading,answer],i)=>{const x=add('table-'+g+'-'+i,answer,'tables','tables',name,null,null,0);x.heading=heading;x.table=g;}));
+const coronaryMapping=[["Right Coronary Artery", ["Right Atrium", "Right Ventricle", "SA node", "AV node", "Distal Right Coronary Artery", "Inferior wall of left ventricle"]], ["Left Main Coronary Artery", ["Widowmaker", "Left circumflex coronary artery", "Left anterior descending coronary artery"]], ["Left Circumflex Coronary Artery", ["lateral left ventricle", "posterior left ventricle", "left atrium"]], ["Left Anterior Descending Coronary Artery", ["anterior left ventricle", "interventricular septum"]]];
+coronaryMapping.forEach(([heading,answers],row)=>answers.forEach((answer,i)=>{const x=add(`mapping-${row}-${i}`,answer,'tables','tables','Coronary Artery Mapping',null,null,0);x.mappingRow='coronary-'+row;x.heading=heading;x.source='Supplied study mapping';}));
 const byId=Object.fromEntries(items.map(x=>[x.id,x]));
 const indices={};for(const x of items.filter(x=>!x.parent&&x.section!=='tables')){const k=x.section+'/'+x.view;indices[k]=(indices[k]||0)+1;x.number=String(indices[k]).padStart(2,'0');}
 function createState(){return {placed:{},consumed:new Set(),revealed:new Set()};}
 let state=createState(),section='heart',view='surface',selected=null,order=shuffle(items.map(x=>x.id));
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function canUse(s,tile){return !s.consumed.has(tile.id);}
+function matchesTarget(s,tile,target){
+ if(tile.section!==target.section||tile.view!==target.view)return false;
+ if(!target.mappingRow)return tile.key===target.key;
+ const row=items.filter(x=>x.mappingRow===target.mappingRow);
+ const allowed=row.filter(x=>x.key===tile.key).length;
+ const used=row.filter(x=>s.placed[x.id]&&byId[s.placed[x.id]].key===tile.key).length;
+ return used<allowed;
+}
 function tryPlace(s,tileId,targetId){
  const tile=byId[tileId],target=byId[targetId];
  if(!tile||!target||s.consumed.has(tileId)||s.placed[targetId])return 'unavailable';
- if(tile.section!==target.section||tile.view!==target.view||tile.key!==target.key)return 'incorrect';
+ if(!matchesTarget(s,tile,target))return 'incorrect';
  s.placed[targetId]=tileId;s.consumed.add(tileId);return 'correct';
 }
-function revealSection(s,which){for(const target of items.filter(x=>x.section===which)){if(s.placed[target.id])continue;const tile=items.find(t=>t.section===target.section&&t.view===target.view&&t.key===target.key&&!s.consumed.has(t.id));if(tile&&tryPlace(s,tile.id,target.id)==='correct')s.revealed.add(target.id);}}
+function revealSection(s,which){for(const target of items.filter(x=>x.section===which)){if(s.placed[target.id])continue;const tile=items.find(t=>!s.consumed.has(t.id)&&matchesTarget(s,t,target));if(tile&&tryPlace(s,tile.id,target.id)==='correct')s.revealed.add(target.id);}}
 function restartSection(s,which){for(const target of items.filter(x=>x.section===which)){const tile=s.placed[target.id];if(tile)s.consumed.delete(tile);delete s.placed[target.id];s.revealed.delete(target.id);}}
 function counts(which){const a=items.filter(x=>x.section===which);return {total:a.length,placed:a.filter(x=>state.placed[x.id]).length,revealed:a.filter(x=>state.revealed.has(x.id)).length};}
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function targetButton(x){const done=!!state.placed[x.id],revealed=state.revealed.has(x.id);return `<button type="button" class="slot ${done?'correct':''} ${revealed?'revealed':''}" data-target="${x.id}" ${done?'disabled':''} aria-label="${esc(done?x.label+(revealed?', revealed':', matched'):(x.heading||('Target '+(x.number||'')+' '+(x.kind||''))))}">${done?esc(x.label):''}</button>`;}
+function targetButton(x){const done=!!state.placed[x.id],revealed=state.revealed.has(x.id),label=done?byId[state.placed[x.id]].label:x.label;return `<button type="button" class="slot ${done?'correct':''} ${revealed?'revealed':''}" data-target="${x.id}" ${done?'disabled':''} aria-label="${esc(done?label+(revealed?', revealed':', matched'):(x.heading||('Target '+(x.number||'')+' '+(x.kind||''))))}">${done?esc(label):''}</button>`;}
 function svgSlot(x,px,py,w=238,h=66,align='center'){return `<foreignObject x="${px}" y="${py}" width="${w}" height="${h}"><div xmlns="http://www.w3.org/1999/xhtml" class="slot-wrap align-${align} ${x.side?'side-'+x.side:''}">${targetButton(x)}</div></foreignObject>`;}
 function callout(x){const px=x.side==='left'?12:850,edge=x.side==='left'?250:850;const [ax,ay]=x.anchor;const bend=x.side==='left'?Math.min(ax-25,315):Math.max(ax+25,810);const route=['lm','lcx'].includes(x.id)?`M${edge} ${x.y+33} H805 L770 ${ay} H${ax}`:`M${edge} ${x.y+33} H${bend} L${ax} ${ay}`;return `<path class="leader ${x.id==='distal-rca'?'posterior-leader':''} ${state.placed[x.id]?'done':''}" d="${route}"/><circle class="anchor" cx="${ax}" cy="${ay}" r="4"/>${svgSlot(x,px,x.y)}`;}
 const svgDefs=`<defs>
@@ -220,7 +231,8 @@ ${waves}${bracket(285,305,354)}<path class="leader" d="M295 354 V368 H592 V378"/
 ${ms}<text x="30" y="831" class="sv-title">ELECTRICAL PHASES</text>${bs}<text x="30" y="975" class="sv-title">REFRACTORY PERIODS</text><text x="1070" y="1130" text-anchor="end" class="sv-small">Refractory boundaries are approximate, following course Fig. 38.9.</text></svg>`;
 }
 function factsArea(){const parents=items.filter(x=>x.section===section&&x.view===view&&!x.parent&&items.some(f=>f.parent===x.id));if(!parents.length)return '';return `<div class="facts-area"><h3>${section==='heart'?'Connect the valve facts':'Connect the definitions'}</h3><div class="fact-grid">${parents.map(p=>`<div class="fact-card"><div class="fact-title">${state.placed[p.id]?esc(p.label):''}</div>${items.filter(f=>f.parent===p.id).map(f=>`<div class="fact-category">${esc(f.kind)}</div>${targetButton(f)}`).join('')}</div>`).join('')}</div></div>`;}
-function tablesView(){return `<div class="table-grid">${tables.map(([name],g)=>`<section class="table-card ${g===4?'wide':''}"><h3>${esc(name)}</h3><table><caption class="sr-only">${esc(name)} matching table</caption><tbody>${items.filter(x=>x.table===g).map(x=>`<tr><th scope="row">${esc(x.heading)}</th><td>${targetButton(x)}</td></tr>`).join('')}</tbody></table></section>`).join('')}</div>`;}
+function mappingTable(){return `<section class="table-card wide"><h3>Coronary Artery Mapping</h3><table><caption class="sr-only">Coronary artery mapping</caption><tbody>${coronaryMapping.map(([heading],row)=>`<tr><th scope="row">${esc(heading)}</th><td><div class="mapping-slots">${items.filter(x=>x.mappingRow==='coronary-'+row).map(x=>`<div class="mapping-slot ${state.placed[x.id]?'filled':''}">${targetButton(x)}</div>`).join('')}</div></td></tr>`).join('')}</tbody></table></section>`;}
+function tablesView(){return `<div class="table-grid">${tables.map(([name],g)=>`<section class="table-card ${g===4?'wide':''}"><h3>${esc(name)}</h3><table><caption class="sr-only">${esc(name)} matching table</caption><tbody>${items.filter(x=>x.table===g).map(x=>`<tr><th scope="row">${esc(x.heading)}</th><td>${targetButton(x)}</td></tr>`).join('')}</tbody></table></section>`).join('')}${mappingTable()}</div>`;}
 const studyProvenance={
   "inventory": "Embedded educational study inventory.",
   "corrections": "Ranges are the selected course-study values, not universal clinical thresholds. QT is used for the QT interval. PP measures the atrial cycle. No definition has been added for the U wave.",
@@ -258,7 +270,7 @@ function renderBank(){
  document.querySelectorAll('[data-tile]').forEach(b=>{b.onclick=()=>{if(suppressClick){suppressClick=false;return;}selected=selected===b.dataset.tile?null:b.dataset.tile;renderBank();const replacement=document.querySelector(`[data-tile="${b.dataset.tile}"]`);if(replacement)replacement.focus({preventScroll:true});announce(selected?'Selected '+byId[selected].label+'. Choose a target.':'Selection cleared.');};b.onpointerdown=startDrag;});
  document.getElementById('selection-hint').textContent=selected?'Selected: '+byId[selected].label:'';
 }
-function place(tileId,targetId){const result=tryPlace(state,tileId,targetId);if(result==='correct'){selected=null;const scrolls=[...document.querySelectorAll('.diagram-scroll')].map(e=>e.scrollLeft);const bankScroll=document.getElementById('bank').scrollTop;render();document.querySelectorAll('.diagram-scroll').forEach((e,i)=>e.scrollLeft=scrolls[i]||0);document.getElementById('bank').scrollTop=bankScroll;const next=document.querySelector('[data-tile]:not(:disabled)');if(next)next.focus({preventScroll:true});announce(byId[targetId].label+' — connected.');}else{const b=document.querySelector(`[data-target="${targetId}"]`);if(b){b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');}announce(result==='incorrect'?'Not this connection. Try another target.':'That connection is already filled.',true);}}
+function place(tileId,targetId){const result=tryPlace(state,tileId,targetId);if(result==='correct'){selected=null;const scrolls=[...document.querySelectorAll('.diagram-scroll')].map(e=>e.scrollLeft);const bankScroll=document.getElementById('bank').scrollTop;render();document.querySelectorAll('.diagram-scroll').forEach((e,i)=>e.scrollLeft=scrolls[i]||0);document.getElementById('bank').scrollTop=bankScroll;const next=document.querySelector('[data-tile]:not(:disabled)');if(next)next.focus({preventScroll:true});announce(byId[tileId].label+' — connected.');}else{const b=document.querySelector(`[data-target="${targetId}"]`);if(b){b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');}announce(result==='incorrect'?'Not this connection. Try another target.':'That connection is already filled.',true);}}
 let timer;function announce(text,error=false){const el=document.getElementById('status');clearTimeout(timer);el.textContent=text;el.className='status show'+(error?' error':'');timer=setTimeout(()=>el.classList.remove('show'),3400);}
 let pendingAction=null;function confirmAction(title,copy,verb,action){const d=document.getElementById('confirm');document.getElementById('confirm-title').textContent=title;document.getElementById('confirm-copy').textContent=copy;document.getElementById('confirm-action').textContent=verb;pendingAction=action;d.showModal();document.getElementById('cancel').focus();}
 document.getElementById('cancel').onclick=()=>{document.getElementById('confirm').close();pendingAction=null;};document.getElementById('confirm-action').onclick=()=>{document.getElementById('confirm').close();if(pendingAction)pendingAction();pendingAction=null;};document.getElementById('confirm').addEventListener('cancel',()=>pendingAction=null);
