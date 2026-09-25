@@ -58,7 +58,8 @@ header{min-height:36px;padding:4px 8px;gap:8px}.brand{gap:5px}.brand svg{width:2
 }
 .posterior-leader{stroke-dasharray:5 5}
 .mapping-slots{display:flex;flex-wrap:wrap;gap:4px}.mapping-slot{flex:0 1 130px;max-width:100%}.mapping-slot.filled{flex:0 1 auto}
-.collection-zone.slot{display:flex;flex-wrap:wrap;align-items:center;gap:4px;width:100%;height:auto;min-height:30px;padding:4px 6px;cursor:pointer}.placed-pill{padding:3px 6px;border:1px solid #426174;border-radius:4px;background:#173244}.collection-zone.collection-complete{border-color:#519a78;background:#12392d;cursor:default}.collection-complete .placed-pill{border-color:#427867;background:#194532}.collection-status{font-size:10px;color:var(--mint);margin-left:auto;white-space:nowrap}.collection-revealed .placed-pill{color:var(--amber)}.table-card.card-complete{border-color:#519a78}.card-complete h3{background:#15382e}.tools{flex-wrap:wrap}
+.collection-zone.slot,.slot.collection-zone:not(.correct):not(.revealed){display:flex;flex-wrap:wrap;align-items:center;gap:4px;width:100%;height:auto;min-height:30px;padding:4px 6px;cursor:pointer}.placed-pill{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;padding:3px 6px;border:1px solid #426174;border-radius:4px;background:#173244}.collection-zone.collection-complete{border-color:#519a78;background:#12392d;cursor:default}.collection-complete .placed-pill{border-color:#427867;background:#194532}.collection-status{font-size:10px;color:var(--mint);margin-left:auto;white-space:nowrap}.collection-revealed .placed-pill{color:var(--amber)}.table-card.card-complete{border-color:#519a78}.card-complete h3{background:#15382e}.tools{flex-wrap:wrap}
+.table-grid{align-items:start}.table-card{height:auto}.collection-zone{max-height:none;min-width:0}
 </style>
 </head>
 <body>
@@ -178,12 +179,12 @@ function atlasImage(name,x,y,w,h,vb,muted=false){const a=HEART_ATLAS[name];retur
 function plateArt(){return `<rect width="1100" height="1500" fill="#0d1b29"/>`;}
 function surfaceArt(){return `${plateArt()}
 ${atlasImage('anterior',274,24,546,783,'160 0 910 1305')}
-<text x="290" y="31" class="sv-small">ANTERIOR</text>
+
 <path d="M399 513 C385 533 370 546 375 565" fill="none" stroke="#edb489" stroke-width="3" stroke-dasharray="5 5"/>
-<text x="274" y="622" class="sv-small">Dashed: continues posteriorly</text>
-<text x="290" y="798" class="sv-small">Patient’s right</text><text x="808" y="798" text-anchor="end" class="sv-small">Patient’s left</text>`;}
+
+`;}
 function wallInset(){return `<g>
-<text x="393" y="817" class="sv-small">WALL LAYERS</text>
+
 <path d="M424 855 Q544 830 709 859 L741 878 Q572 850 452 875Z" fill="#acc8d5" stroke="#c8dce2"/>
 <path d="M424 855 Q544 830 709 859 V873 Q544 846 424 868Z" fill="#7597aa"/>
 <path d="M424 868 Q544 846 709 873 V896 Q544 869 424 891Z" fill="#0a1723"/>
@@ -194,14 +195,14 @@ function wallInset(){return `<g>
 <path d="M424 900 Q544 878 709 905 V985 Q544 958 424 980Z" fill="url(#atlasFiber)"/>
 <path d="M424 980 Q544 958 709 985 V992 Q544 965 424 987Z" fill="#f4ddca"/>
 <path d="M709 985 L741 989 V996 L709 992Z" fill="#c5aa97"/>
-<text x="444" y="882" font-size="11" fill="#98afbf">Pericardial cavity</text>
-<text x="443" y="1020" class="sv-small">Chamber lumen</text>
+
+
 <defs><linearGradient id="layerMuscle" x2=".8" y2="1"><stop stop-color="#f6ac8c"/><stop offset=".45" stop-color="#d57561"/><stop offset="1" stop-color="#974b47"/></linearGradient>
 <pattern id="atlasFiber" width="28" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)"><path d="M0 4Q8 0 15 4T28 4 M0 12Q8 8 15 12T28 12" fill="none" stroke="#ffc6a7" opacity=".36" stroke-width="1.2"/><path d="M1 6Q10 2 20 6T30 6" fill="none" stroke="#823f39" opacity=".24"/></pattern></defs></g>`;}
 function cutawayArt(conduction=false){return `${plateArt()}
 ${atlasImage('cutaway',286,25,504,766.8,'200 0 840 1278',conduction)}
-<text x="290" y="31" class="sv-small">${conduction?'CONDUCTION':'ANTERIOR CUTAWAY'}</text>
-<text x="290" y="784" class="sv-small">Patient’s right</text><text x="808" y="784" text-anchor="end" class="sv-small">Patient’s left</text>
+
+
 ${conduction?'':wallInset()}`;}
 function conductionArt(){return `${cutawayArt(true)}
 <defs><filter id="nerveGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2"/></filter></defs>
@@ -225,11 +226,11 @@ function ecgBoard(){
  const bands=[['atrial',140,195,860,18,230],['ventricular',215,285,860,283,235],['repolarization',305,402,860,567,270],['absolute',215,338,1005,165,270],['relative',338,396,1005,600,270]];
  let ms=measurement.map(([id,x1,x2,y,cx])=>`${bracket(x1,x2,y)}<path class="leader" d="M${(x1+x2)/2} ${y}V${y+13}L${cx+117} ${y+23}"/>${svgSlot(byId[id],cx,y+23,235,57,'top')}`).join('');
  let bs=bands.map(([id,x1,x2,y,cx,w])=>`<rect x="${x1}" y="${y-17}" width="${x2-x1}" height="18" rx="3" fill="${id==='relative'?'#d3a15a':id==='absolute'?'#947fbf':'#67c9ca'}" opacity=".6"/>${bracket(x1,x2,y+5)}<path class="leader" d="M${(x1+x2)/2} ${y+5} V${y+18} L${cx+w/2} ${y+35}"/>${svgSlot(byId[id],cx,y+35,w,65,'top')}`).join('');
- return `<svg class="board" viewBox="0 0 1100 1150" role="group" aria-label="Two-cycle ECG labeling and interval diagram">${svgDefs}<text x="30" y="35" class="sv-title">WAVEFORM &amp; LANDMARKS</text><text x="1070" y="35" class="sv-small" text-anchor="end">Schematic · not a calibrated rhythm strip</text><rect x="30" y="150" width="1035" height="215" fill="url(#ecgGrid)" stroke="#355063"/><path d="${cycle}" fill="none" stroke="#8ee9da" stroke-width="3" stroke-linejoin="round"/><path d="${cycle}" transform="translate(380 0)" fill="none" stroke="#8ee9da" stroke-width="3" stroke-linejoin="round"/><path d="M870 300H1065" stroke="#8ee9da" stroke-width="3"/>
-${waves}${bracket(285,305,354)}<path class="leader" d="M295 354 V368 H592 V378"/>${svgSlot(byId.st,475,375,235,65,'top')}<text x="806" y="400" class="sv-small">Two consecutive cycles</text>
+ return `<svg class="board" viewBox="0 0 1100 1150" role="group" aria-label="Two-cycle ECG labeling and interval diagram">${svgDefs}<text x="30" y="35" class="sv-title">WAVEFORM &amp; LANDMARKS</text><rect x="30" y="150" width="1035" height="215" fill="url(#ecgGrid)" stroke="#355063"/><path d="${cycle}" fill="none" stroke="#8ee9da" stroke-width="3" stroke-linejoin="round"/><path d="${cycle}" transform="translate(380 0)" fill="none" stroke="#8ee9da" stroke-width="3" stroke-linejoin="round"/><path d="M870 300H1065" stroke="#8ee9da" stroke-width="3"/>
+${waves}${bracket(285,305,354)}<path class="leader" d="M295 354 V368 H592 V378"/>${svgSlot(byId.st,475,375,235,65,'top')}
 <text x="30" y="467" class="sv-title">INTERVALS</text>
 <g opacity=".35" stroke="#65818d" stroke-dasharray="3 6"><path d="M140 442V1090 M160 442V810 M215 442V1090 M245 442V810 M285 442V1090 M305 442V1090 M338 830V1090 M402 442V1090 M540 635V730 M625 735V815"/></g>
-${ms}<text x="30" y="831" class="sv-title">ELECTRICAL PHASES</text>${bs}<text x="30" y="975" class="sv-title">REFRACTORY PERIODS</text><text x="1070" y="1130" text-anchor="end" class="sv-small">Refractory boundaries are approximate, following course Fig. 38.9.</text></svg>`;
+${ms}<text x="30" y="831" class="sv-title">ELECTRICAL PHASES</text>${bs}<text x="30" y="975" class="sv-title">REFRACTORY PERIODS</text></svg>`;
 }
 function factsArea(){const parents=items.filter(x=>x.section===section&&x.view===view&&!x.parent&&items.some(f=>f.parent===x.id));if(!parents.length)return '';return `<div class="facts-area"><h3>${section==='heart'?'Connect the valve facts':'Connect the definitions'}</h3><div class="fact-grid">${parents.map(p=>`<div class="fact-card"><div class="fact-title">${state.placed[p.id]?esc(p.label):''}</div>${items.filter(f=>f.parent===p.id).map(f=>`<div class="fact-category">${esc(f.kind)}</div>${targetButton(f)}`).join('')}</div>`).join('')}</div></div>`;}
 function collectionZone(row,heading){const remaining=row.find(x=>!state.placed[x.id]),done=!remaining,revealed=row.some(x=>state.revealed.has(x.id));return `<button type="button" class="slot collection-zone ${done?'collection-complete':''} ${revealed?'collection-revealed':''}" ${done?'disabled':`data-target="${remaining.id}"`} aria-label="${esc(heading+(done?', complete':', add an answer'))}">${row.filter(x=>state.placed[x.id]).map(x=>`<span class="placed-pill">${esc(byId[state.placed[x.id]].label)}</span>`).join('')}${done?'<span class="collection-status">✓ Complete</span>':''}</button>`;}
