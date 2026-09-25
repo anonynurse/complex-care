@@ -270,7 +270,7 @@ ${section==='tables'?tablesView():`<div class="diagram-card"><div class="diagram
  document.querySelectorAll('[data-target]').forEach(b=>b.onclick=()=>{if(selected)place(selected,b.dataset.target);else announce('Select a tile from the answer bank first.');});
 }
 const expanded={};
-function bankGroups(which,currentView){return [...new Set(items.filter(x=>x.section===which&&x.view===currentView).map(x=>x.group))];}
+function bankGroups(which,currentView){if(which==='tables')return [...tables.map(([name])=>name),'Coronary Artery Mapping'];return [...new Set(items.filter(x=>x.section===which&&x.view===currentView).map(x=>x.group))];}
 function renderBank(){
  const visible=order.map(id=>byId[id]).filter(x=>x.section===section&&x.view===view&&!state.consumed.has(x.id));
  const groups=bankGroups(section,view);
