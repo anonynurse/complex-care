@@ -67,6 +67,8 @@ header{min-height:36px;padding:4px 8px;gap:8px}.brand{gap:5px}.brand svg{width:2
 .category-details>summary h3{padding:0;border:0;display:block}
 .category-details:not([open])>summary{border-bottom:0}
 .category-details>summary:hover{background:#1b3546}
+.bank-subgroup{margin:3px 0 7px;border-top:1px solid var(--line)}
+.bank-subgroup>summary{font-size:11px;letter-spacing:0;text-transform:none;color:var(--cyan);padding:4px 2px}
 </style>
 </head>
 <body>
@@ -279,11 +281,20 @@ ${isLecture(section)?lectureView():`<div class="diagram-card"><div class="diagra
 }
 const expanded={};
 function bankGroups(which,currentView){if(isLecture(which))return lectureById[which].categories.map(c=>c.title);return [...new Set(items.filter(x=>x.section===which&&x.view===currentView).map(x=>x.group))];}
+const rhythmColumns=['Rate','Rhythm','P wave','PR interval','QRS','QT','Treatment','Diagnostic / nursing notes'];
+function bankTiles(answers){return `<div class="tiles">${answers.map(x=>`<button class="tile ${selected===x.id?'selected':''}" data-tile="${x.id}" aria-pressed="${selected===x.id}">${answerMarkup(x)}</button>`).join('')}</div>`;}
+function bankPool(group,answers,key){
+ if(lectureById[section]?.title!=='ECG Interpretation'||group!=='Rhythm Diagnostic Cheat Sheet')return bankTiles(answers);
+ const columnOf=x=>rhythmColumns.find(c=>x.label.startsWith(c+': '))||'Other';
+ const columns=[...rhythmColumns];if(items.some(x=>x.section===section&&x.group===group&&columnOf(x)==='Other'))columns.push('Other');
+ return columns.map(c=>{const k=key+'/'+c;return `<details class="bank-subgroup" data-bank-column="${esc(k)}" ${expanded[k]===false?'':'open'}><summary>${esc(c)}</summary>${bankTiles(answers.filter(x=>columnOf(x)===c))}</details>`;}).join('');
+}
 function renderBank(){
  const visible=order.map(id=>byId[id]).filter(x=>x.section===section&&x.view===view&&!state.consumed.has(x.id));
  const groups=bankGroups(section,view);
  document.getElementById('bank-count').textContent=isLecture(section)?'':visible.length+' remaining';
- document.getElementById('bank').innerHTML=(visible.length?'':'<div class="empty-bank">All connections in this view are complete. ✓</div>')+groups.map(g=>{const k=section+'/'+view+'/'+g;return `<details class="bank-group" data-group="${esc(k)}" ${expanded[k]===false?'':'open'}><summary>${esc(g)} ${isLecture(section)?'':`<span>(${visible.filter(x=>x.group===g).length})</span>`}</summary><div class="tiles">${visible.filter(x=>x.group===g).map(x=>`<button class="tile ${selected===x.id?'selected':''}" data-tile="${x.id}" aria-pressed="${selected===x.id}">${answerMarkup(x)}</button>`).join('')}</div></details>`;}).join('');
+ document.getElementById('bank').innerHTML=(visible.length?'':'<div class="empty-bank">All connections in this view are complete. ✓</div>')+groups.map(g=>{const k=section+'/'+view+'/'+g;return `<details class="bank-group" data-group="${esc(k)}" ${expanded[k]===false?'':'open'}><summary>${esc(g)} ${isLecture(section)?'':`<span>(${visible.filter(x=>x.group===g).length})</span>`}</summary>${bankPool(g,visible.filter(x=>x.group===g),k)}</details>`;}).join('');
+ document.querySelectorAll('[data-bank-column]').forEach(d=>d.ontoggle=()=>{if(d.isConnected)expanded[d.dataset.bankColumn]=d.open;});
  document.querySelectorAll('.bank-group').forEach(d=>d.ontoggle=()=>expanded[d.dataset.group]=d.open);
  document.querySelectorAll('[data-tile]').forEach(b=>{b.onclick=()=>{if(suppressClick){suppressClick=false;return;}selected=selected===b.dataset.tile?null:b.dataset.tile;renderBank();const replacement=document.querySelector(`[data-tile="${b.dataset.tile}"]`);if(replacement)replacement.focus({preventScroll:true});announce(selected?'Selected '+byId[selected].label+'. Choose a target.':'Selection cleared.');};b.onpointerdown=startDrag;});
  document.getElementById('selection-hint').textContent=selected?'Selected: '+byId[selected].label:'';
