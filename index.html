@@ -60,6 +60,13 @@ header{min-height:36px;padding:4px 8px;gap:8px}.brand{gap:5px}.brand svg{width:2
 .mapping-slots{display:flex;flex-wrap:wrap;gap:4px}.mapping-slot{flex:0 1 130px;max-width:100%}.mapping-slot.filled{flex:0 1 auto}
 .collection-zone.slot,.slot.collection-zone:not(.correct):not(.revealed){display:flex;flex-wrap:wrap;align-items:center;gap:4px;width:100%;height:auto;min-height:30px;padding:4px 6px;cursor:pointer}.placed-pill{max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;padding:3px 6px;border:1px solid #426174;border-radius:4px;background:#173244}.collection-zone.collection-complete{border-color:#519a78;background:#12392d;cursor:default}.collection-complete .placed-pill{border-color:#427867;background:#194532}.collection-status{font-size:10px;color:var(--mint);margin-left:auto;white-space:nowrap}.collection-revealed .placed-pill{color:var(--amber)}.table-card.card-complete{border-color:#519a78}.card-complete h3{background:#15382e}.tools{flex-wrap:wrap}
 .table-grid{align-items:start}.table-card{height:auto}.collection-zone{max-height:none;min-width:0}
+.category-details>summary{display:flex;align-items:center;gap:5px;list-style:none;border-bottom:1px solid var(--line);padding:4px 6px;cursor:pointer}
+.category-details>summary::-webkit-details-marker{display:none}
+.category-details>summary:before{content:'▸';color:var(--muted)}
+.category-details[open]>summary:before{content:'▾'}
+.category-details>summary h3{padding:0;border:0;display:block}
+.category-details:not([open])>summary{border-bottom:0}
+.category-details>summary:hover{background:#1b3546}
 </style>
 </head>
 <body>
@@ -234,10 +241,12 @@ ${ms}<text x="30" y="831" class="sv-title">ELECTRICAL PHASES</text>${bs}<text x=
 function factsArea(){const parents=items.filter(x=>x.section===section&&x.view===view&&!x.parent&&items.some(f=>f.parent===x.id));if(!parents.length)return '';return `<div class="facts-area"><h3>${section==='heart'?'Connect the valve facts':'Connect the definitions'}</h3><div class="fact-grid">${parents.map(p=>`<div class="fact-card"><div class="fact-title">${state.placed[p.id]?esc(p.label):''}</div>${items.filter(f=>f.parent===p.id).map(f=>`<div class="fact-category">${esc(f.kind)}</div>${targetButton(f)}`).join('')}</div>`).join('')}</div></div>`;}
 function collectionZone(row,heading){const remaining=row.find(x=>!state.placed[x.id]),done=!remaining,revealed=row.some(x=>state.revealed.has(x.id));return `<button type="button" class="slot collection-zone ${done?'collection-complete':''} ${revealed?'collection-revealed':''}" ${done?'disabled':`data-target="${remaining.id}"`} aria-label="${esc(heading+(done?', complete':', add an answer'))}">${row.filter(x=>state.placed[x.id]).map(x=>`<span class="placed-pill">${answerMarkup(byId[state.placed[x.id]])}</span>`).join('')}${done?'<span class="collection-status">✓ Complete</span>':''}</button>`;}
 function cardComplete(row){return row.every(x=>state.placed[x.id])?'card-complete':'';}
-function lectureView(){return `<div class="table-grid">${lectureById[section].categories.map(category=>{
+const categoryExpanded={};
+function lectureView(){return `<div class="table-grid">${lectureById[section].categories.map((category,index)=>{
  const all=items.filter(x=>x.section===section&&x.group===category.title);
  const wide=category.rows.length>=4||category.rows.some(row=>row.answers.length>1);
- return `<section class="table-card ${wide?'wide':''} ${cardComplete(all)}"><h3>${esc(category.title)}</h3><table><caption class="sr-only">${esc(category.title)}</caption><tbody>${category.rows.map(row=>`<tr><th scope="row">${esc(row.title)}</th><td>${collectionZone(all.filter(x=>x.mappingRow===row.id),row.title)}</td></tr>`).join('')}</tbody></table></section>`;
+ const categoryKey=section+'/'+index;
+ return `<section class="table-card ${wide?'wide':''} ${cardComplete(all)}"><details class="category-details" data-category="${categoryKey}" ${categoryExpanded[categoryKey]===false?'':'open'}><summary><h3>${esc(category.title)}</h3></summary><table><caption class="sr-only">${esc(category.title)}</caption><tbody>${category.rows.map(row=>`<tr><th scope="row">${esc(row.title)}</th><td>${collectionZone(all.filter(x=>x.mappingRow===row.id),row.title)}</td></tr>`).join('')}</tbody></table></details></section>`;
  }).join('')}</div>`;}
 function resetAll(){state=createState();selected=null;order=shuffle(order);clearDrag();}
 const studyProvenance={
@@ -260,6 +269,7 @@ function render(){
  document.getElementById('main').innerHTML=`<div class="section-head"><div><div class="eyebrow">${section==='heart'?'01 / Anatomy':section==='ecg'?'02 / Electrophysiology':'03 / Associations'}</div><h2>${esc(title)}</h2></div><div class="tools"><button class="reveal" id="reveal">Reveal answers</button><button id="restart">Reset Section</button><button id="reset-all">Reset All</button></div></div>${c.placed===c.total?'<div class="completion">Section complete.</div>':''}
 ${section==='heart'?`<div class="viewbar"><div class="tabs" role="group" aria-label="Heart view">${['surface','cutaway','conduction'].map(v=>`<button data-view="${v}" aria-pressed="${view===v}" class="${view===v?'active':''}">${v[0].toUpperCase()+v.slice(1)}</button>`).join('')}</div></div>`:''}
 ${isLecture(section)?lectureView():`<div class="diagram-card"><div class="diagram-caption"><strong>${section==='ecg'?'PQRSTU':view==='surface'?'Great vessels & coronary circulation':view==='cutaway'?'Chambers, valves & wall layers':'Nodes & conduction pathways'}</strong></div><div class="diagram-scroll">${section==='heart'?heartBoard():ecgBoard()}</div>${factsArea()}</div>`}`;
+ document.querySelectorAll('[data-category]').forEach(d=>d.ontoggle=()=>{if(d.isConnected)categoryExpanded[d.dataset.category]=d.open;});
  renderBank();
  document.getElementById('reveal').onclick=()=>confirmAction('Reveal this section?','All remaining answers in this section, including other heart views, will be filled in and marked as revealed.','Reveal answers',()=>{revealSection(state,section);selected=null;render();announce('Answers revealed. Reset the section to practice again.');});
  document.getElementById('restart').onclick=()=>confirmAction('Reset this section?','Clear placements in this section and shuffle its answer tiles. Your other sections will stay as they are.','Reset Section',()=>{restartSection(state,section);selected=null;order=shuffle(order);render();announce('Section restarted.');});
