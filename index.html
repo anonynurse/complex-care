@@ -307,7 +307,7 @@ ${isLecture(section)?lectureView():`<div class="diagram-card"><div class="diagra
 }
 const expanded={};
 function bankGroups(which,currentView){if(isLecture(which))return lectureById[which].categories.map(c=>c.title);return [...new Set(items.filter(x=>x.section===which&&x.view===currentView).map(x=>x.group))];}
-function bankTiles(answers){return `<div class="tiles">${answers.map(x=>`<button class="tile ${selected===x.id?'selected':''}" data-tile="${x.id}" aria-pressed="${selected===x.id}">${answerMarkup(x)}</button>`).join('')}</div>`;}
+function bankTiles(answers){return `<div class="tiles">${answers.map(x=>`<button class="tile ${selected===x.id?'selected':''}" data-tile="${x.id}" aria-pressed="${selected===x.id}">${answerMarkup(x,true)}</button>`).join('')}</div>`;}
 function bankPool(group,answers,key){
  if(!isRhythmCategory(lectureById[section]||{}, {title:group}))return bankTiles(answers);
  return rhythmColumns.map(column=>{const k=key+'/'+column;return `<details class="bank-subgroup" data-bank-column="${esc(k)}" ${expanded[k]===false?'':'open'}><summary>${esc(column)}</summary>${bankTiles(answers.filter(x=>x.column===column))}</details>`;}).join('');
