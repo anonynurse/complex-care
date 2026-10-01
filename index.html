@@ -68,7 +68,7 @@ header{min-height:36px;padding:4px 8px;gap:8px}.brand{gap:5px}.brand svg{width:2
 .category-details:not([open])>summary{border-bottom:0}
 .category-details>summary:hover{background:#1b3546}
 .bank-subgroup{margin:3px 0 7px;border-top:1px solid var(--line)}
-.bank-subgroup>summary{font-size:11px;letter-spacing:0;text-transform:none;color:var(--cyan);padding:4px 2px}
+.bank-subgroup>summary{font-size:9px;letter-spacing:0;text-transform:none;color:var(--cyan);padding:3px 2px}
 /* Compact study layout; blank sizes never depend on answer text. */
 body{font-size:11px;line-height:1.25}
 h1{font-size:14px}h2{font-size:13px}.eyebrow{font-size:8px}
@@ -308,11 +308,16 @@ ${isLecture(section)?lectureView():`<div class="diagram-card"><div class="diagra
 const expanded={};
 function bankGroups(which,currentView){if(isLecture(which))return lectureById[which].categories.map(c=>c.title);return [...new Set(items.filter(x=>x.section===which&&x.view===currentView).map(x=>x.group))];}
 function bankTiles(answers){return `<div class="tiles">${answers.map(x=>`<button class="tile ${selected===x.id?'selected':''}" data-tile="${x.id}" aria-pressed="${selected===x.id}">${answerMarkup(x)}</button>`).join('')}</div>`;}
+function bankPool(group,answers,key){
+ if(!isRhythmCategory(lectureById[section]||{}, {title:group}))return bankTiles(answers);
+ return rhythmColumns.map(column=>{const k=key+'/'+column;return `<details class="bank-subgroup" data-bank-column="${esc(k)}" ${expanded[k]===false?'':'open'}><summary>${esc(column)}</summary>${bankTiles(answers.filter(x=>x.column===column))}</details>`;}).join('');
+}
 function renderBank(){
  const visible=order.map(id=>byId[id]).filter(x=>x.section===section&&x.view===view&&!state.consumed.has(x.id));
  const groups=bankGroups(section,view);
  document.getElementById('bank-count').textContent=isLecture(section)?'':visible.length+' remaining';
- document.getElementById('bank').innerHTML=(visible.length?'':'<div class="empty-bank">All connections in this view are complete. ✓</div>')+groups.map(g=>{const k=section+'/'+view+'/'+g;return `<details class="bank-group" data-group="${esc(k)}" ${expanded[k]===false?'':'open'}><summary>${esc(g)} ${isLecture(section)?'':`<span>(${visible.filter(x=>x.group===g).length})</span>`}</summary>${bankTiles(visible.filter(x=>x.group===g))}</details>`;}).join('');
+ document.getElementById('bank').innerHTML=(visible.length?'':'<div class="empty-bank">All connections in this view are complete. ✓</div>')+groups.map(g=>{const k=section+'/'+view+'/'+g;return `<details class="bank-group" data-group="${esc(k)}" ${expanded[k]===false?'':'open'}><summary>${esc(g)} ${isLecture(section)?'':`<span>(${visible.filter(x=>x.group===g).length})</span>`}</summary>${bankPool(g,visible.filter(x=>x.group===g),k)}</details>`;}).join('');
+ document.querySelectorAll('[data-bank-column]').forEach(d=>d.ontoggle=()=>{if(d.isConnected)expanded[d.dataset.bankColumn]=d.open;});
  document.querySelectorAll('.bank-group').forEach(d=>d.ontoggle=()=>expanded[d.dataset.group]=d.open);
  document.querySelectorAll('[data-tile]').forEach(b=>{b.onclick=()=>{if(suppressClick){suppressClick=false;return;}selected=selected===b.dataset.tile?null:b.dataset.tile;renderBank();const replacement=document.querySelector(`[data-tile="${b.dataset.tile}"]`);if(replacement)replacement.focus({preventScroll:true});announce(selected?'Selected '+byId[selected].label+'. Choose a target.':'Selection cleared.');};b.onpointerdown=startDrag;});
  document.getElementById('selection-hint').textContent=selected?'Selected: '+byId[selected].label:'';
