@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'">
-<title>Complex Care · Connection Lab</title>
+<title>Complex Care</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%230b1724'/%3E%3Cpath d='M4 22h8l4-12 7 23 5-16 3 5h5' fill='none' stroke='%2365ded3' stroke-width='3'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#08121c;--panel:#101f2e;--panel2:#142737;--line:#294354;--muted:#9cb3c3;--text:#e4edf3;--cyan:#79e3dd;--mint:#98e2ba;--amber:#f0c884;--red:#ff9a9f;--radius:12px}
@@ -99,7 +99,7 @@ h1{font-size:14px}h2{font-size:13px}.eyebrow{font-size:8px}
 </style>
 </head>
 <body>
-<header><div class="brand"><svg aria-hidden="true" viewBox="0 0 40 40"><rect width="40" height="40" rx="11" fill="#153442"/><path d="M5 22h7l4-11 7 20 5-15 3 6h4" fill="none" stroke="#79e3dd" stroke-width="2.5" stroke-linejoin="round"/></svg><div><div class="eyebrow">Connection lab</div><h1>Complex Care</h1></div></div><div class="section-picker"><label for="section">Sections</label><select id="section"><option value="heart">Heart anatomy</option><option value="ecg">PQRSTU complex</option><option value="quick">Quick Rhythm ID</option></select></div></header>
+<header><div class="brand"><h1>Complex Care</h1></div><div class="section-picker"><label for="section">Sections</label><select id="section"><option value="heart">Heart anatomy</option><option value="ecg">PQRSTU complex</option><option value="quick">Quick Rhythm ID</option></select></div></header>
 <div class="workspace"><aside class="bank" aria-label="Answer bank"><div class="bank-head"><span id="bank-count" class="bank-count"></span><h2>Answer bank</h2></div><div id="bank" class="bank-body"></div><div id="selection-hint" class="selection-hint"></div></aside><main class="main" id="main"></main></div>
 <div class="status" id="status" role="status" aria-live="polite" aria-atomic="true"></div>
 <dialog id="confirm"><h2 id="confirm-title"></h2><p id="confirm-copy"></p><div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm-action">Continue</button></div></dialog>
